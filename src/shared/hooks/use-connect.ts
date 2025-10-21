@@ -1,10 +1,35 @@
+/**
+ * @fileoverview Хук для управления WebSocket соединением
+ * @description Предоставляет функции для подключения, отправки сообщений и управления подписками
+ */
+
 import useClientStore from '@/app/stores/clint.store';
 import useConnectStore, { type MessageHandler } from '@/app/stores/connect.store';
 import useStarsStore from '@/app/stores/stars.store';
 
+/**
+ * Канал по умолчанию для WebSocket сообщений
+ * @constant {string}
+ */
 export const DEFAULT_CHANNEL = 'test';
 
-export function useConnect()
+interface ConnectorData
+{
+    connected: boolean;
+    connect: () => WebSocket;
+    close: () => void;
+    send: (channel: string, data: Record<string, unknown>) => void;
+    subscribe: (channel: string, callback: MessageHandler) => () => void;
+    unsubscribe: (channel: string) => void;
+}
+
+/**
+ * Хук для управления WebSocket соединением
+ * @description Предоставляет методы для подключения к серверу, отправки сообщений,
+ * подписки на каналы и управления состоянием соединения
+ * @returns {ConnectorData} Объект с методами и состоянием соединения
+ */
+export function useConnect(): ConnectorData
 {
     const connected = useConnectStore(state => state.connected);
 
@@ -51,7 +76,7 @@ export function useConnect()
         return socket;
     };
 
-    const send = (channel: string, data: any) =>
+    const send = (channel: string, data: Record<string, unknown>) =>
     {
         const socket = useConnectStore.getState().socket;
         const client = useClientStore.getState().id;
